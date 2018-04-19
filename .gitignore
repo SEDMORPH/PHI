@@ -1,0 +1,9 @@
+# IDL generated files
+.DS_store
+
+# Emacs generated filesa
+*~
+
+# Don't include the output files
+outputs/*
+
