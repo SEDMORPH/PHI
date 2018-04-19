@@ -1,0 +1,56 @@
+PHI - A Bayesian MCMC code for galaxy image decomposition
+=========================================================
+
+
+Basic set up with test image
+----------------------------
+
+1) Clone the code and test files from https://github.com/SEDMORPH/PHI. This contains:
+
+Code: phi.pro
+
+Directories: inputs, outputs, sample
+
+2) Ensure you have the correct IDL libraries installed and that these are included in your IDL path:
+* The IDL astronomy users library https://idlastro.gsfc.nasa.gov/
+* The Coyote IDL libary  http://www.idlcoyote.com/documents/programs.php#COYOTE_LIBRARY_DOWNLOAD
+
+Here is an example of what your path might look like on a mac running bash shell. Here it points firstly to my personal IDL code, then the IDL-Astro library, then the Coyote library, then the core IDL libraries. This is the order in which IDL will look for code (after looking in the current directory). 
+
+mycomputer:~ milou$ echo $IDL_PATH
++/Users/milou/idl/pro:+/Users/milou/idl/astron:+/Users/milou/idl/coyote:+/Applications/itt/idl
+
+3) Open IDL in the same directory as you have put the code and run PHI:
+   IDL> phi
+
+Hopefully you will obtain the following files in output:
+ChainInfo.sav
+Pre_Trace.sav
+TraceHistory.sav
+[filename]_dataout.fits - contains the parameters and likelihoods
+PHI_info.dat - basic chain info for each image
+
+
+Basic plotting of test image results
+------------------------------------
+
+
+
+Adding your own files
+---------------------
+
+1) Open the setup.txt file in /inputs and set the relevant parameters for your data. 
+
+2) Put the images in /sample and create list of files and initial starting parameters in images.txt
+
+3) Put the masks in /inputs/Masks and create list of files in Masks.txt
+
+4) Put the error images in /inputs/weights and create list of files in weights.txt
+
+5) Ensure your PSF file is in /inputs/PSF (if you are using one)
+
+
+
+
+
+
