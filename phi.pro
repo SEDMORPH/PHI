@@ -4260,7 +4260,11 @@ Function likeBay,pars
   like = ((-0.5D * chisq) - isig - numbit ) 
 
  
-  
+  ;ires = ima - model
+  ;writefits, './outputs/test_image.fits', ima
+  ;writefits, './outputs/test_res.fits', Ires
+  ;writefits, './outputs/test.fits', model
+  ;stop
   ;Priors
   ;priors = call_function('priors',Pars)
   likee = like ;+ priors
@@ -4960,7 +4964,7 @@ print, ''
      ;cgDisplay , 1000.,1000.,/ASPECT
      if (f1dfit eq 1) then bagal_1d,NAME[i],pars,varmat=varmat else bagal_priors,pars,varmat=varmat
 
-     stop
+     
      T = SYSTIME(1) 
      PHI_AM,like, nstep, pars,'likeBay',scale=varmat, $
                       adapt=nstep, accrate=0.234, $
@@ -4995,6 +4999,8 @@ print, ''
      if (sernn4 eq 1) then pars[sorder4+4,*] = 10D^pars[sorder4+4,*]
 
 
+     
+     
      output_data = make_array(n_elements(pars[*,0])+1,n_elements(pars[0,*]),/DOUBLE)
      for ii=0, n_elements(pars[0,*])-1 do output_data[*,ii] = [pars[*,ii],like[ii]]
      WRITEFITS, dir_out+NAME[i]+bit+'_dataout.fits', output_data
@@ -5004,165 +5010,37 @@ print, ''
      xmax =  fix(imasubb[1])
      ymin =  fix(imasubb[2])
      ymax =  fix(imasubb[3])
-     like = like;/(n_elements(ima[xmin:xmax,ymin:ymax]))
-     ;stop
-     oldlike = like
-     sorder = where(nlist eq 'serX0', sernn)
-     sorder2 = where(nlist eq 'ser2X0', sernn2)
-     sorder3 = where(nlist eq 'ser3X0', sernn3)
-     sorder4 = where(nlist eq 'ser4X0', sernn4)
-     eorder = where(nlist eq 'expX0', expnn)
-     cenorder = where(nlist eq 'X0', cennn)
-     skyorder = where(nlist eq 'sky', skynn)
+     like = like                ;/(n_elements(ima[xmin:xmax,ymin:ymax]))
 
-     discard = 0
-     newparas = MAKE_ARRAY(1,/FLOAT)
-     newlists = MAKE_ARRAY(1,/STRING)
-     excstr = make_array(1,/STRING)
-     if sernn gt 0 then begin
-        
-        sorder = fix(sorder[0])
-        serx0 = reform(pars[sorder,discard:*])
-        sxinfo = postinfo(serx0)
-        sxmed = sxinfo.med
-        sxlow = sxinfo.siglow
-        sxhi = sxinfo.sighigh
-        
-        sery0 = reform(pars[sorder+1,discard:*])
-        syinfo = postinfo(sery0)
-        symed = syinfo.med
-        sylow = syinfo.siglow
-        syhi = syinfo.sighigh
-        
-        mue = reform(pars[sorder+2,discard:*])
-        nlist[sorder+2] = 'mue'
-                               
-        ieinfo = postinfo(mue)
-        muemed = ieinfo.med
-        muelow = ieinfo.siglow
-        muehi = ieinfo.sighigh
-        
-        Re = 10D^(reform(pars[sorder+3,discard:*]))
-        reinfo = postinfo(Re)
-        remed = reinfo.med
-        relow = reinfo.siglow
-        rehi = reinfo.sighigh
-        
-        n = (reform(pars[sorder+4,discard:*]))
-        ninfo = postinfo(n)
-        nmed = ninfo.med
-        nlow = ninfo.siglow
-        nhi = ninfo.sighigh
-        
-        serE = reform(pars[sorder+5,discard:*])
-        bainfo = postinfo(serE)
-        sbamed = bainfo.med
-        sbalow = bainfo.siglow
-        sbahi = bainfo.sighigh
-        
-        serpa =  reform(pars[sorder+6,discard:*])
-        spainfo = postinfo(serpa)
-        spamed = spainfo.med
-        spalow = spainfo.siglow
-        spahi = spainfo.sighigh
-        newparas = [newparas,sxmed, sxlow, sxhi,symed, sylow, syhi,muemed,muelow,muehi,remed,relow,rehi,nmed,nlow,nhi,sbamed,sbalow,sbahi,spamed,spalow,spahi]
-        newlists = [newlists,'sxmed', 'sxlow', 'sxhi','symed', 'sylow', 'syhi','iemed','ielow','iehi','remed','relow','rehigh','nmed','nlow','nhi','sbamed','sbalow','sbahi','spamed','spalow','spahi']
-     endif
+     pars_fit = nlist[where(flist[0,*] eq 1)]
+     loglist = ['Ie', 'Re',$
+                'I0', 'h',$
+                'Ie2', 'Re2', $
+                'Ie3', 'Re3', $
+                'Ie4', 'Re4', $
+                'bI0','bh1','bh2','rb',$
+                'ferI0','l','fern',$
+                'fer2I0','l2','fer2n'$
+               ]
+     
+     for ii=0, n_elements(nlist)-1 do begin
+        if flist[0,ii] eq 1 then begin
+           info = postinfo(pars[ii,*])
+           if total(strmatch(loglist, nlist[ii], /FOLD_CASE)) ge 1 then info = postinfo(10D^(pars[ii,*])) else info = postinfo(pars[ii,*])
+           med = info.med
+           low = info.siglow
+           hi = info.sighigh
+           error = ((med - low) + (hi - med)) / 2D
+           print, $
+              strcompress(nlist[ii] + ' = ' + string(med) + '+/-' + string(error))
+        endif
+     endfor
 
-     if expnn gt 0 then begin
-        
-        eorder = fix(eorder[0])
-        expx0 = reform(pars[eorder,discard:*])
-        exinfo = postinfo(expx0)
-        exmed = exinfo.med
-        exlow = exinfo.siglow
-        exhi = exinfo.sighigh
-        
-        expy0 = reform(pars[eorder+1,discard:*])
-        eyinfo = postinfo(expy0)
-        eymed = eyinfo.med
-        eylow = eyinfo.siglow
-        eyhi = eyinfo.sighigh
-        
-        mu0 = reform(pars[eorder+2,discard:*])
-        nlist[eorder+2] = 'mu0'
-                                ;mu0 = -2.5*alog10(I0) + zcalib + 2.5*alog10((scale^2D))
-        i0info = postinfo(mu0)
-        mu0med = i0info.med
-        mu0low = i0info.siglow
-        mu0hi = i0info.sighigh
-        
-        h = 10D^(reform(pars[eorder+3,discard:*]))
-        hinfo = postinfo(h)
-        hmed = hinfo.med
-        hlow = hinfo.siglow
-        hhi = hinfo.sighigh
-        
-        expE = reform(pars[eorder+4,discard:*])
-        bainfo = postinfo(expE)
-        ebamed = bainfo.med
-        ebalow = bainfo.siglow
-        ebahi = bainfo.sighigh
+     
+     stop
 
-        exppa =  reform(pars[eorder+5,discard:*])
-        epainfo = postinfo(exppa)
-        epamed = epainfo.med
-        epalow = epainfo.siglow
-        epahi = epainfo.sighigh
-        newparas = [newparas,exmed, exlow, exhi,eymed, eylow, eyhi,mu0med,mu0low,mu0hi,hmed,hlow,hhi,ebamed,ebalow,ebahi,epamed,epalow,epahi]
-        newlists = [newlists,'exmed', 'exlow', 'exhi','eymed', 'eylow', 'eyhi','i0med','i0low','i0hi','hmed','hlow','hhigh','ebamed','ebalow','ebahi','epamed','epalow','epahi']
-     endif
-     REMOVE, 0 , newparas
-
-
-     if sernn gt 0 then begin
-        print, 'SERSIC COMPONENTS'
-        sorder = where(newlists eq 'sxmed', sernn)
-        print, $
-           strcompress('X0 = ' + string(newparas[sorder]) + ' +/- ' + string(((newparas[sorder] - newparas[sorder+1]) + (newparas[sorder+2] - newparas[sorder]))/2D))
-        sorder = where(newlists eq 'symed', sernn)
-        print, $
-           strcompress('Y0 = ' + string(newparas[sorder]) + ' +/- ' +  string(((newparas[sorder] - newparas[sorder+1]) + (newparas[sorder+2] - newparas[sorder]))/2D))
-        sorder = where(newlists eq 'iemed', sernn)
-        print, $
-           strcompress('Ie = ' + string(newparas[sorder]) + ' +/- ' +  string(((newparas[sorder] - newparas[sorder+1]) + (newparas[sorder+2] - newparas[sorder]))/2D))
-        sorder = where(newlists eq 'remed', sernn)
-        print, $
-           strcompress('Re = ' + string(newparas[sorder]) + ' +/- ' +  string(((newparas[sorder] - newparas[sorder+1]) + (newparas[sorder+2] - newparas[sorder]))/2D))
-        sorder = where(newlists eq 'nmed', sernn)
-        print, $
-           strcompress('n = ' + string(newparas[sorder]) + ' +/- ' +  string(((newparas[sorder] - newparas[sorder+1]) + (newparas[sorder+2] - newparas[sorder]))/2D))
-        sorder = where(newlists eq 'sbamed', sernn)
-        print, $
-           strcompress('b/a = ' + string(newparas[sorder]) + ' +/- ' +  string(((newparas[sorder] - newparas[sorder+1]) + (newparas[sorder+2] - newparas[sorder]))/2D))
-        sorder = where(newlists eq 'spamed', sernn)
-        print, $
-           strcompress('PA = ' + string(newparas[sorder]) + ' +/- ' +  string(((newparas[sorder] - newparas[sorder+1]) + (newparas[sorder+2] - newparas[sorder]))/2D))
-     endif
-
-if expnn gt 0 then begin
-        print, 'EXPONENTIAL COMPONENTS'
-        eorder = where(newlists eq 'exmed', expnn)
-        print, $
-           strcompress('X0 = ' + string(newparas[eorder]) + ' +/- ' + string(((newparas[eorder] - newparas[eorder+1]) + (newparas[eorder+2] - newparas[eorder]))/2D))
-        eorder = where(newlists eq 'eymed', expnn)
-        print, $
-           strcompress('Y0 = ' + string(newparas[eorder]) + ' +/- ' +  string(((newparas[eorder] - newparas[eorder+1]) + (newparas[eorder+2] - newparas[eorder]))/2D))
-        eorder = where(newlists eq 'i0med', expnn)
-        print, $
-           strcompress('mu0 = ' + string(newparas[eorder]) + ' +/- ' +  string(((newparas[eorder] - newparas[eorder+1]) + (newparas[eorder+2] - newparas[eorder]))/2D))
-        eorder = where(newlists eq 'hmed', expnn)
-        print, $
-           strcompress('h = ' + string(newparas[eorder]) + ' +/- ' +  string(((newparas[eorder] - newparas[eorder+1]) + (newparas[eorder+2] - newparas[eorder]))/2D))
-        eorder = where(newlists eq 'ebamed', expnn)
-        print, $
-           strcompress('b/a = ' + string(newparas[eorder]) + ' +/- ' +  string(((newparas[eorder] - newparas[eorder+1]) + (newparas[eorder+2] - newparas[eorder]))/2D))
-        eorder = where(newlists eq 'epamed', expnn)
-        print, $
-           strcompress('PA = ' + string(newparas[eorder]) + ' +/- ' +  string(((newparas[eorder] - newparas[eorder+1]) + (newparas[eorder+2] - newparas[eorder]))/2D))
-     endif
-;stop
   endfor
+  
   ;parameters[*,2,*] = (parameters[*,2,*] * B)
   
   openw,2,dir_out+'BAGAL_info.dat',width=500
