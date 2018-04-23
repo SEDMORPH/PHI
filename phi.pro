@@ -1955,20 +1955,20 @@ function bagal_flag, pars
      ;if bexpa gt 1D then beflag = 0
 
      ;brake radius 
-     rb = pars[beorder+6]
-     if rb lt 1D then beflag = 0
+     rb = (10D^pars[beorder+6])[0]
+     if rb lt 0.05D then beflag = 0
      
     
      ;Exponential b/a 
-     expE = pars[beorder+5]   
-     if expE lt 0.2D then beflag = 0
-     if expE gt 1D then beflag = 0
+     bexpE = pars[beorder+7]   
+     if bexpE lt 0.2D then beflag = 0
+     if bexpE gt 1D then beflag = 0
 
      ;Exponential PA
      ;expPA = ACOS(pars[eorder+5])*180D/!DPI
-     expPA = (pars[beorder+6])
-     if expPa lt -360D then beflag = 0
-     if expPA gt 360D then beflag = 0
+     bexpPA = (pars[beorder+8])
+     if bexpPa lt -360D then beflag = 0
+     if bexpPA gt 360D then beflag = 0
      
      ;if (eflag eq 0) then stop
   endif
@@ -2002,7 +2002,7 @@ function bagal_flag, pars
      
      ;Ferrors b/a 
      ferE = pars[forder+5]   
-     if ferE lt 0.2D then fflag = 0
+     if ferE lt 0.1D then fflag = 0
      if ferE gt 1D then fflag = 0
      
      ;Ferrors PA
@@ -2012,7 +2012,7 @@ function bagal_flag, pars
 
      ;Ferrors c
      ferc = pars[forder+7]   
-     if ferc lt 0.2D then fflag = 0
+     if ferc lt -1 then fflag = 0
      if ferc gt 1D then fflag = 0
      
      ;if (sflag eq 0) then stop
@@ -2047,7 +2047,7 @@ function bagal_flag, pars
      
      ;Ferrors b/a 
      fer2E = pars[forder2+5]   
-     if fer2E lt 0.2D then fflag2 = 0
+     if fer2E lt 0.1D then fflag2 = 0
      if fer2E gt 1D then fflag2 = 0
      
      ;Ferrors PA
@@ -2057,7 +2057,7 @@ function bagal_flag, pars
 
      ;Ferrors c
      fer2c = pars[forder2+7]   
-     if fer2c lt 0.2D then fflag2 = 0
+     if fer2c lt -1D then fflag2 = 0
      if fer2c gt 1D then fflag2 = 0
      
      ;if (sflag eq 0) then stop
