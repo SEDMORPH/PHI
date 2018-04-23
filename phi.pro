@@ -2315,26 +2315,61 @@ Pro bagal_priors,pars,varmat=varmat
   common mflags, fsersic,fsersic2,fsersic3,fsersic4,fexp,fbexp,ffer,ffer2
   common noise, sigmap, Pnoise,gain,RON,Bnoise,skysig,skymean,skysigma
 
-  skip = 1+i
-  readcol, './inputs/bagal_inputs.txt',NAME,seein,seein2,betaaa,$
-           serX0, serY0, Ie, Re, n, serE, serPA,$
-           expX0, expY0, I0, h, expE, expPA,$
-           ser2X0, ser2Y0, Ie2, Re2, n2, ser2E, ser2PA,$
-           ser3X0, ser3Y0, Ie3, Re3, n3, ser3E, ser3PA,$
-           ser4X0, ser4Y0, Ie4, Re4, n4, ser4E, ser4PA,$
-           bexpX0, bexpY0, bI0, bh1,bh2, bexpa, rb, bexpE, bexpPA,$
-           ferX0, ferY0, ferI0, l, fern, ferE, ferPA, ferc,$
-           fer2X0, fer2Y0, fer2I0, l2, fer2n, fer2E, fer2PA, fer2c,$
-           FORMAT='A,F,F,F,'+$
-           'F,F,F,F,F,F,F,'+$
-           'F,F,F,F,F,F,'+$
-           'F,F,F,F,F,F,F,'+$
-           'F,F,F,F,F,F,F,'+$
-           'F,F,F,F,F,F,F',+$
-           'F,F,F,F,F,F,F,F,F'+$
-           'F,F,F,F,F,F,F,F'+$
-           'F,F,F,F,F,F,F,F',$
-           SKIPLINE=skip,/SILENT,NUMLINE=1
+  skip = i
+;  format = ''
+;  readcol, './inputs/bagal_inputs.txt',NAME,seein,seein2,betaaa,$
+;           serX0, serY0, Ie, Re, n, serE, serPA,$
+;           expX0, expY0, I0, h, expE, expPA,$
+;           ser2X0, ser2Y0, Ie2, Re2, n2, ser2E, ser2PA,$
+;           ser3X0, ser3Y0, Ie3, Re3, n3, ser3E, ser3PA,$
+;           ser4X0, ser4Y0, Ie4, Re4, n4, ser4E, ser4PA,$
+;           bexpX0,$
+;           FORMAT=format,$
+;           SKIPLINE=skip,/SILENT,NUMLINE=1
+;  print, format
+
+  strlist = ['NAME','seein','seein2','betaaa',$
+             'serX0', 'serY0', 'Ie', 'Re', 'n', 'serE', 'serPA',$
+             'expX0', 'expY0', 'I0', 'h', 'expE', 'expPA',$
+             'ser2X0', 'ser2Y0', 'Ie2', 'Re2', 'n2', 'ser2E', 'ser2PA',$
+             'ser3X0', 'ser3Y0', 'Ie3', 'Re3', 'n3', 'ser3E', 'ser3PA',$
+             'ser4X0', 'ser4Y0', 'Ie4', 'Re4', 'n4', 'ser4E', 'ser4PA',$
+             'bexpX0','bexpY0','bI0','h1','h2','bexpa','rb','bexpE','bexpPA',$
+             'ferX0','ferY0','ferI0','l','fern','ferE','ferPA','ferc',$
+             'fer2X0','fer2Y0','fer2I0','l2','fer2n','fer2E','fer2PA','fer2c'$
+            ]
+
+  head_length = 1
+  file = './inputs/bagal_inputs.txt'
+  data_line=fltarr(n_elements(strlist))       ; Creates an empty array of floating point numbers 
+  head_line=''                  ; Creates an empty string (for text) 
+  header=strarr(head_length)    ; Creates an empty array of strings 
+
+  j = 0
+  
+  openr,lun,file, /GET_LUN               ; open the file to read from 
+  
+;If there's a header then read to header string array 
+
+  for k=0,head_length-1 do begin
+     readf,lun,head_line
+     header(k)=head_line
+  endfor 
+
+;Read data 
+  repeat begin
+     readf,lun,data_line
+;Reading only specified line
+     if j eq skip then data = data_line 
+     j=j+1l
+  endrep until eof(lun)                             ;read until end of the file (eof) 
+  close,lun
+
+  for jj=1, n_elements(data)-1 do begin
+     exec = EXECUTE(strlist[jj] + ' = ' + string(data[jj]))
+  endfor
+  
+  
   
   sorder = where(nlist eq 'serX0', sernn)
   sorder2 = where(nlist eq 'ser2X0', sernn2)
@@ -3883,9 +3918,9 @@ FUNCTION bagal_model,pars
      
      dh = (1D/h1) - (1D/h2)
      inva = 1D/bexpa
-     s = (1D + EXP(-bexpa*rb) ) ** (-inva * dh)
+     s = (1D + EXP(-bexpa*rb) ) ^ (-inva * dh)
      z1 = bexpa * (rbexp - rb)
-     z = (1 + EXP(z1)) ** (inva * dh)
+     z = (1 + EXP(z1)) ^ (inva * dh)
 
      
      Ibexp = s * bi0 * EXP(-1D * (rbexp/h1)) * z
@@ -3921,7 +3956,7 @@ FUNCTION bagal_model,pars
 ;CREATE THE MODEL   
      ferindex = where_xyz(rf gt l, Xind=xfer, Yind=yfer)
      rf[xfer, yfer] = 0
-     Ifer = feri0 * (rf - (rf / l)**2) ** (fern + 0.5)
+     Ifer = feri0 * (rf - (rf / l)^2) ^ (fern + 0.5)
      
      excstr = [excstr,'Ifer']
   endif
@@ -3954,7 +3989,7 @@ FUNCTION bagal_model,pars
 ;CREATE THE MODEL   
      ferindex = where_xyz(rf2 gt l2, Xind=xfer2, Yind=yfer2)
      rf2[xfer2, yfer2] = 0
-     Ifer2 = fer2i0 * (rf2 - (rf2 / l2)**2) ** (fer2n + 0.5)
+     Ifer2 = fer2i0 * (rf2 - (rf2 / l2)^2) ^ (fer2n + 0.5)
      
      excstr = [excstr,'Ifer2']
   endif
@@ -4057,20 +4092,20 @@ FUNCTION bagal_model,pars
   if bexpnn gt 0 then begin
      bexpnewr = remodel(Imasub,bexpxc,bexpyc,bexppa,bexpell,bexpx,bexpy,bexpxsize)
      z1 = bexpa * (bexpnewr - rb)
-     z = (1 + EXP(z1)) ** (inva * dh)
+     z = (1 + EXP(z1)) ^ (inva * dh)
      Ibexpnew = s * bi0 * EXP(-1D * (bexpnewr/h1)) * z
   endif
   if fernn gt 0 then begin
      fernewr = remodel_gen(Imasub,ferxc,feryc,ferpa,ferell,ferc,ferx,fery,ferxsize)
      ferindex = where_xyz(fernewr gt l, Xind=xfer, Yind=yfer)
      fernewr[xfer, yfer] = 0
-     Ifernew = feri0 * (fernewr - (fernewr / l)**2) ** (fern + 0.5)
+     Ifernew = feri0 * (fernewr - (fernewr / l)^2) ^ (fern + 0.5)
   endif
   if fernn2 gt 0 then begin
      fer2newr = remodel_gen(Imasub,fer2xc,fer2yc,fer2pa,fer2ell,fer2c,fer2x,fer2y,fer2xsize)
      ferindex = where_xyz(fer2newr gt l2, Xind=xfer2, Yind=yfer2)
      fer2newr[xfer2, yfer2] = 0
-     Ifer2new = fer2i0 * (fer2newr - (fer2newr / l2)**2) ** (fer2n + 0.5)
+     Ifer2new = fer2i0 * (fer2newr - (fer2newr / l2)^2) ^ (fer2n + 0.5)
   endif
   Itotnew = Isnew + Iexpnew + Is2new + Is3new + Is4new + Ibexpnew + Ifernew
   Itotnew = rebin(Itotnew, xsubdis+1, ysubdis+1)
@@ -4925,7 +4960,7 @@ print, ''
      ;cgDisplay , 1000.,1000.,/ASPECT
      if (f1dfit eq 1) then bagal_1d,NAME[i],pars,varmat=varmat else bagal_priors,pars,varmat=varmat
 
-     
+     stop
      T = SYSTIME(1) 
      PHI_AM,like, nstep, pars,'likeBay',scale=varmat, $
                       adapt=nstep, accrate=0.234, $
