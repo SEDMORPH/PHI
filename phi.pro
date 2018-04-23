@@ -1,7 +1,7 @@
 
 ;+
 ; NAME:
-;   BaGal2D
+;   PHI
 ; PURPOSE:
 ;   A Bayesian MCMC method for 2D photometric decompositions of
 ;   galaxies and other astronomical objects.    
@@ -14,10 +14,7 @@
 ; OUTPUTS:
 ;
 ;
-; BUGS:
-; REVISION HISTORY:
-;   Project Start: September 2014
-;-
+
 function psf_gaussian, parameters, NPIXEL=npixel, NDIMENSION=ndim, FWHM=fwhm,  $
                         DOUBLE = double, CENTROID=cntrd, ST_DEV=st_dev,  $
                         XY_CORREL=xy_corr, NORMALIZE=normalize
