@@ -5000,6 +5000,14 @@ print, ''
      if (bexpnn eq 1) then bit = bit+'b'
      if (fernn eq 1) then bit = bit+'f'
      if (fernn2 eq 1) then bit = bit+'f'
+
+     ;Generate a median model and residual 
+     meddata = median(pars, DIMENSION=2)
+     model = bagal_model(meddata)
+     ires = ima - model
+     writefits, './outputs/'+ NAME[i] +bit+'_image.fits', ima
+     writefits, './outputs/'+ NAME[i] +bit+'_residual.fits', Ires
+     writefits, './outputs/'+ NAME[i] +bit+'_model.fits', model
      
      if (sernn eq 1) then pars[sorder+4,*] = 10D^pars[sorder+4,*]
      if (sernn2 eq 1) then pars[sorder2+4,*] = 10D^pars[sorder2+4,*]
@@ -5014,6 +5022,7 @@ print, ''
      WRITEFITS, dir_out+NAME[i]+bit+'_dataout.fits', output_data
      
      information[i,*] = info
+     
      xmin = fix(imasubb[0])
      xmax =  fix(imasubb[1])
      ymin =  fix(imasubb[2])
@@ -5030,6 +5039,7 @@ print, ''
                 'ferI0','l','fern',$
                 'fer2I0','l2','fer2n'$
                ]
+
      
      for ii=0, n_elements(nlist)-1 do begin
         if flist[0,ii] eq 1 then begin
@@ -5040,10 +5050,20 @@ print, ''
            hi = info.sighigh
            error = ((med - low) + (hi - med)) / 2D
            print, $
-              strcompress(nlist[ii] + ' = ' + string(med) + '+/-' + string(error))
+              strcompress(nlist[ii] + ' = ' + string(med) + ' +/- ' + string(error))
         endif
      endfor
 
+     cgDisplay , 700.,700.,/aspect
+     cgPS_Open,strcompress('./plots/'+NAME[i]+bit+'_outputs.ps')
+     index = where(flist[0,*] eq 1)
+     plist = nlist[index]
+     data = pars[index,*]
+     triplot,data,bins=25,titles=plist,info=info,/boxplot,/contour
+     cgPS_close
+
+     
+     
      
      stop
 
@@ -5051,443 +5071,16 @@ print, ''
   
   ;parameters[*,2,*] = (parameters[*,2,*] * B)
   
-  openw,2,dir_out+'BAGAL_info.dat',width=500
+  openw,2,dir_out+'PHI_info.dat',width=500
      
   for i=0, nima-1 do begin   
      printf,2,name[i],transpose(information[i,*])
   endfor 
   close,2
 
-stop
+
 END
 
-
-
-function plotcolor,x
-
-xnew = round(255*(x - min(x))/(max(x)-min(x)))
-
-col = byte(xnew)
-return,col
-
-end
-
-function arr_round, array
-  array1 = Float(Round(array*100)/100.)  
-  return, array1
-end
-
-pro bagal_plots,pars,like,NAME,newparas,newlists,nrep
-  common setup2, scale, zcalib,tpsf, betaa, fFFT, seeing, sky, sigsky,fixcen,seeing2
-  common image_data, ima, ivar, nx, ny, ii_t, A, B, imasubb, radi,sigabove
-  common setup3, flist, nlist, mlist, astep, i, af0,groups
-  common mflags, fsersic,fsersic2,fsersic3,fsersic4,fexp,fbexp,ffer,ffer2
-  common files, psfname, inname, maskname, whtname, imaname, dir_out, psf
-
-  
-  ;Filtering the values according to the median of the likelihood
-  likemed = median(like)
-  indlike = where(like gt likemed)
-  ;like = like[indlike]
-  ;pars = pars[*,indlike]
-  
-  nn = long(n_elements(pars[0,*]))
-  discard = 0;nn/4l
-  like = like[discard:*]
-  
-  newparas = MAKE_ARRAY(1,/FLOAT)
-  newlists = MAKE_ARRAY(1,/STRING)
-  sorder = where(nlist eq 'serX0', sernn)
-  eorder = where(nlist eq 'expX0', expnn)
-  cenorder = where(nlist eq 'X0', cennn)
-  skyorder = where(nlist eq 'sky', skynn)
-  
-  excstr = make_array(1,/STRING)
-  if sernn gt 0 then begin
-
-     sorder = fix(sorder[0])
-     serx0 = reform(pars[sorder,discard:*])
-     sxinfo = postinfo(serx0)
-     sxmed = sxinfo.med
-     sxlow = sxinfo.siglow
-     sxhi = sxinfo.sighigh
-     
-     sery0 = reform(pars[sorder+1,discard:*])
-     syinfo = postinfo(sery0)
-     symed = syinfo.med
-     sylow = syinfo.siglow
-     syhi = syinfo.sighigh
-
-     Ie = (reform(pars[sorder+2,discard:*]))
-     nlist[sorder+2] = 'log(Ie)'
-     mue = ie;-2.5*alog10(Ie) + zcalib + 2.5*alog10((scale^2D))
-     ieinfo = postinfo(mue)
-     muemed = ieinfo.med
-     muelow = ieinfo.siglow
-     muehi = ieinfo.sighigh
-
-     Re = 10D^(reform(pars[sorder+3,discard:*]))
-     reinfo = postinfo(Re)
-     remed = reinfo.med
-     relow = reinfo.siglow
-     rehi = reinfo.sighigh
-     
-     n = (reform(pars[sorder+4,discard:*]))
-     ninfo = postinfo(n)
-     nmed = ninfo.med
-     nlow = ninfo.siglow
-     nhi = ninfo.sighigh
-     
-     serE = reform(pars[sorder+5,discard:*])
-     bainfo = postinfo(serE)
-     sbamed = bainfo.med
-     sbalow = bainfo.siglow
-     sbahi = bainfo.sighigh
-
-     serpa =  reform(pars[sorder+6,discard:*]);acos(reform(pars[sorder+6,discard:*]))*180D/!DPI
-     ;serpa =  acos(reform(pars[sorder+6,discard:*]))*180D/!DPI
-     spainfo = postinfo(serpa)
-     spamed = spainfo.med
-     spalow = spainfo.siglow
-     spahi = spainfo.sighigh
-     newparas = [newparas,sxmed, sxlow, sxhi,symed, sylow, syhi,muemed,muelow,muehi,remed,relow,rehi,nmed,nlow,nhi,sbamed,sbalow,sbahi,spamed,spalow,spahi]
-     newlists = [newlists,'sxmed', 'sxlow', 'sxhi','symed', 'sylow', 'syhi','Iemed','Ielow','Iehi','remed','relow','rehigh','nmed','nlow','nhi','sbamed','sbalow','sbahi','spamed','spalow','spahi']
-  endif
-
-  if expnn gt 0 then begin
-   
-     eorder = fix(eorder[0])
-     expx0 = reform(pars[eorder,discard:*])
-     exinfo = postinfo(expx0)
-     exmed = exinfo.med
-     exlow = exinfo.siglow
-     exhi = exinfo.sighigh
-     
-     expy0 = reform(pars[eorder+1,discard:*])
-     eyinfo = postinfo(expy0)
-     eymed = eyinfo.med
-     eylow = eyinfo.siglow
-     eyhi = eyinfo.sighigh
-
-     I0 = (reform(pars[eorder+2,discard:*]))
-     nlist[eorder+2] = 'log(I0)'
-     mu0 = i0;-2.5*alog10(I0) + zcalib + 2.5*alog10((scale^2D))
-     i0info = postinfo(mu0)
-     mu0med = i0info.med
-     mu0low = i0info.siglow
-     mu0hi = i0info.sighigh
-
-     h = 10D^(reform(pars[eorder+3,discard:*]))
-     hinfo = postinfo(h)
-     hmed = hinfo.med
-     hlow = hinfo.siglow
-     hhi = hinfo.sighigh
-     
-     expE = reform(pars[eorder+4,discard:*])
-     bainfo = postinfo(expE)
-     ebamed = bainfo.med
-     ebalow = bainfo.siglow
-     ebahi = bainfo.sighigh
-
-     ;exppa = acos(reform(pars[eorder+5,discard:*]))*180D/!DPI
-     exppa = reform(pars[eorder+5,discard:*]); acos(reform(pars[eorder+5,discard:*]))*180D/!DPI
-     epainfo = postinfo(exppa)
-     epamed = epainfo.med
-     epalow = epainfo.siglow
-     epahi = epainfo.sighigh
-     newparas = [newparas,exmed, exlow, exhi,eymed, eylow, eyhi,mu0med,mu0low,mu0hi,hmed,hlow,hhi,ebamed,ebalow,ebahi,epamed,epalow,epahi]
-     newlists = [newlists,'exmed', 'exlow', 'exhi','eymed', 'eylow', 'eyhi','I0med','I0low','I0hi','hmed','hlow','hhigh','ebamed','ebalow','ebahi','epamed','epalow','epahi']
-  endif
-
-  if cennn gt 0 then begin
-     cenorder = fix(cenorder[0])
-     x0 = reform(pars[cenorder,discard:*])
-     xinfo = postinfo(x0)
-     xmed = xinfo.med
-     xlow = xinfo.siglow
-     xhi = xinfo.sighigh
-     
-     y0 = reform(pars[cenorder+1,discard:*])
-     yinfo = postinfo(y0)
-     ymed = yinfo.med
-     ylow = yinfo.siglow
-     yhi = yinfo.sighigh
-     
-     newparas = [newparas,xmed, xlow, xhi,ymed, ylow, yhi]
-     newlists = [newlists,'xmed', 'xlow', 'xhi','ymed', 'ylow', 'yhi']
- 
-  endif
-  if skynn gt 0 then begin
-     skyorder = fix(skyorder[0])
-     sky = reform(pars[skyorder,discard:*])
-     skyinfo = postinfo(sky)
-     skymed = skyinfo.med
-     skylow = skyinfo.siglow
-     skyhi = skyinfo.sighigh
-     
-     
-     newparas = [newparas,skymed, skylow, skyhi]
-     newlists = [newlists,'skymed', 'skylow', 'skyhi']
- 
-  endif
-  REMOVE, 0 , newparas
-  remove, 0, newlists
-  ;if expnn gt 0 then begin
-    ; eorder = fix(eorder[0])
-    ; expxc = pars[eorder]
-    ; expyc = pars[eorder+1]
-    ; I0 = pars[eorder+2]
-    ; h = pars[eorder+3]
-    ; expell = pars[eorder+4]
-   ;  exppa = (!DPI*pars[eorder+5])/180D
-     
-;DEFINE THE RADIAL POSITION VECTORS 
-     
-  ;   rexp = model_array(expxc,expyc,exppa,expell,expx,expy)
-     
-  ;   Iexp = I0*EXP(-rexp/h)
-  ;   excstr = [excstr,'Iexp']
-  ;endif 
-  ;REMOVE, 0 , excstr
-  ;excstr = strjoin(excstr,'+')
-  ;exc = execute('Itot ='+excstr)
-  
-
-;PLOT THE POSTERIOR DISTRIBUTIONS
-  
-  if sernn gt 0 then begin
-     sxrange = strcompress('['+strjoin(string(arr_round([min(serx0)-(sxlow/50D), max(serx0)+(sxhi/50D)])),',')+']')
-     syrange = strcompress('['+strjoin(string(arr_round([min(sery0)-(sylow/50D), max(sery0)+(syhi/50D)])),',')+']')
-     nrange = strcompress('['+strjoin(string(arr_round([min(n)-(nlow/50D), max(n)+(nhi/50D)])),',')+']')
-     muerange = strcompress('['+strjoin(string(arr_round([min(mue)-(muelow-min(mue)), max(mue)+(max(mue)-muehi)])),',')+']')
-     rerange = strcompress('['+strjoin(string(arr_round([min(re)-(relow/50D), max(re)+(rehi/50D)])),',')+']')
-     sbarange = strcompress('['+strjoin(string(arr_round([min(serE)-(sbalow/50D), max(serE)+(sbahi/50D)])),',')+']')
-     sparange = strcompress('['+strjoin(string(arr_round([min(serpa)-(spalow/50D), max(serpa)+(spahi/50D)])),',')+']')
-  endif
-  if expnn gt 0 then begin
-     exrange = strcompress('['+strjoin(string(arr_round([min(expx0)-(exlow/50D), max(expx0)+(exhi/50D)])),',')+']')
-     eyrange = strcompress('['+strjoin(string(arr_round([min(expy0)-(eylow/50D), max(expy0)+(eyhi/50D)])),',')+']')
-     mu0range = strcompress('['+strjoin(string(arr_round([min(mu0)-(mu0low-min(mu0)), max(mu0)+(max(mu0)-mu0hi)])),',')+']')
-     hrange = strcompress('['+strjoin(string(arr_round([min(h)-(hlow/50D), max(h)+(hhi/50D)])),',')+']')
-     ebarange = strcompress('['+strjoin(string(arr_round([min(expE)-(ebalow/50D), max(expE)+(ebahi/50D)])),',')+']')
-     eparange = strcompress('['+strjoin(string(arr_round([min(exppa)-(epalow/50D), max(exppa)+(epahi/50D)])),',')+']')
-  endif
-  if cennn gt 0 then begin
-     
-     xrange = strcompress('['+strjoin(string(arr_round([min(x0)-(xlow/50D), max(x0)+(xhi/50D)])),',')+']')
-     yrange = strcompress('['+strjoin(string(arr_round([min(y0)-(ylow/50D), max(y0)+(yhi/50D)])),',')+']')
-    
-  endif
-  if skynn gt 0 then begin
-     
-     skyrange = strcompress('['+strjoin(string(arr_round([min(sky)-(skylow/50D), max(sky)+(skyhi/50D)])),',')+']')
-     
-    
-  endif
-  
-  tot = fix(total(flist[0,*]))
-  
-  index = where(flist[0,*] eq 1)
-  plist = nlist[index]
-  nnlist = ['serX0','serY0','log(I$\downe$)','R$\downe$','n','b/a','$\theta$$\downPA, ser$','expX0','expY0','log(I$\down0$)','h','b/a','$\theta$$\downPA, exp$','X$\down0$','Y$\down0$','Sky background']
-  pplist = nnlist[index]
-  
-  data = pars
-  
-  if sernn gt 0 then begin
-     
-     sorder = fix(sorder[0])
-     data[sorder+6,*] = data[sorder+6,*];(acos(data[sorder+6,*])*180D/!DPI)
-     ;data[sorder+6,*] = (acos(data[sorder+6,*])*180D/!DPI)
-     data[sorder+3,*] = 10D^((data[sorder+3,*]))
-     ;data[sorder+4,*] = 10D^((data[sorder+4,*]))
-  endif
-  if expnn gt 0 then begin
-     eorder = fix(eorder[0])
-     data[eorder+5,*] = data[eorder+5,*];(acos(data[eorder+5,*])*180D/!DPI)
-     ;data[eorder+5,*] = (acos(data[eorder+5,*])*180D/!DPI)
-     data[eorder+3,*] = 10D^((data[eorder+3,*]))
-     
-  endif
-  data = data[index,*]
-  triplot,data,bins=25,titles=pplist,info=info,/boxplot,/contour
-
-  
-  !P.MULTI = 0
-  
-  index = where(flist[0,*] eq 1)
-  npars= n_elements(Pars)
-  nfpars = n_elements(Pars[index])
-  
-;Trace history plots 
-  RESTORE, dir_out+'TraceHistory.sav'
-  RESTORE, dir_out+'ChainInfo.sav'
-  adpstop = sumchain[0]
-  transstop = sumchain[1]
-  adapt_stop = sumchain[2]
-  discard = sumchain[3]
-  chainstop = sumchain[4]
-
-   xx = range(0,(chainstop-adapt_stop),(chainstop-adapt_stop))
-   colors = Round(cgScaleVector(Findgen(nrep), 0, 255))
-   cgLoadCT, 34
-   color = plotcolor(indgen(nrep))
-
-  if (n_elements(nlist) le 7) then nplots = 5 else nplots = 9
-  !p.multi = [0, 1,nplots]
-  charsize = 0.8
-  if (expnn eq 0) then begin
-     
-     miny = min(Xveclistdim[*,2,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,2,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,2,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,2,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,2,0:chainstop-adapt_stop],yr=[miny,maxy], yt='mue',xt='Iteration',/nodata,charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,2,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor
-     
-     miny = min(10D^Xveclistdim[*,3,0:chainstop-adapt_stop])-(0.01*min(10D^Xveclistdim[*,3,0:chainstop-adapt_stop]))
-     maxy = max(10D^Xveclistdim[*,3,0:chainstop-adapt_stop])+(0.01*max(10D^Xveclistdim[*,3,0:chainstop-adapt_stop]))
-     cgplot, xx, 10D^(Xveclistdim[0,3,0:chainstop-adapt_stop]), yt='Re',xt='Iteration',yr=[miny,maxy],/nodata,charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, 10D^(Xveclistdim[kk,3,0:chainstop-adapt_stop]),/overplot,color=color[kk]
-     endfor
-     
-     
-     miny = min(Xveclistdim[*,4,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,4,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,4,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,4,0:chainstop-adapt_stop]))
-     cgplot, xx, (Xveclistdim[0,4,0:chainstop-adapt_stop]),yt='n',xt='Iteration',/nodata,yr=[miny,maxy],charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, (Xveclistdim[kk,4,0:chainstop-adapt_stop]),/overplot,color=color[kk]
-     endfor
-     
-     miny = min(Xveclistdim[*,5,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,5,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,5,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,5,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,5,0:chainstop-adapt_stop],yr=[miny,maxy], yt='b/a',xt='Iteration',/nodata,charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,5,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor
-     
-     miny = min(Xveclistdim[*,6,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,6,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,6,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,6,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,6,0:chainstop-adapt_stop],yt='ser PA',xt='Iteration',/nodata,yr=[miny,maxy],charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,6,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor           
-  endif else begin
-     
-     miny = min(Xveclistdim[*,2,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,2,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,2,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,2,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,2,0:chainstop-adapt_stop],yr=[miny,maxy], yt='mue',xt='Iteration',/nodata,charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,2,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor
-     
-     miny = min(10D^Xveclistdim[*,3,0:chainstop-adapt_stop])-(0.01*min(10D^Xveclistdim[*,3,0:chainstop-adapt_stop]))
-     maxy = max(10D^Xveclistdim[*,3,0:chainstop-adapt_stop])+(0.01*max(10D^Xveclistdim[*,3,0:chainstop-adapt_stop]))
-     cgplot, xx, 10D^(Xveclistdim[0,3,0:chainstop-adapt_stop]), yt='Re',xt='Iteration',/nodata,yr=[miny,maxy],charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, 10D^(Xveclistdim[kk,3,0:chainstop-adapt_stop]),/overplot,color=color[kk]
-     endfor
-     
-     miny = min(Xveclistdim[*,4,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,4,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,4,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,4,0:chainstop-adapt_stop]))
-     cgplot, xx, (Xveclistdim[0,4,0:chainstop-adapt_stop]),yt='n',xt='Iteration',/nodata,yr=[miny,maxy],charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, (Xveclistdim[kk,4,0:chainstop-adapt_stop]),/overplot,color=color[kk]
-     endfor
-     
-     miny = min(Xveclistdim[*,5,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,5,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,5,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,5,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,5,0:chainstop-adapt_stop],yr=[miny,maxy], yt='b/a',xt='Iteration',/nodata,charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,5,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor
-     
-     miny = min(Xveclistdim[*,6,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,6,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,6,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,6,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,6,0:chainstop-adapt_stop],yt='ser PA',xt='Iteration',/nodata,yr=[miny,maxy],charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,6,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor
-     
-
-     miny = min(Xveclistdim[*,9,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,9,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,9,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,9,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,9,0:chainstop-adapt_stop],yr=[miny,maxy], yt='mu0',xt='Iteration',/nodata,charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,9,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor
-     
-           
-     miny = min(10D^Xveclistdim[*,10,0:chainstop-adapt_stop])-(0.01*min(10D^Xveclistdim[*,10,0:chainstop-adapt_stop]))
-     maxy = max(10D^Xveclistdim[*,10,0:chainstop-adapt_stop])+(0.01*max(10D^Xveclistdim[*,10,0:chainstop-adapt_stop]))
-     cgplot, xx, (10D^Xveclistdim[0,10,0:chainstop-adapt_stop]),yt='h',xt='Iteration',/nodata,yr=[miny,maxy],charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, (10D^Xveclistdim[kk,10,0:chainstop-adapt_stop]),/overplot,color=color[kk]
-     endfor         
-     
-     miny = min(Xveclistdim[*,11,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,11,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,11,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,11,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,11,0:chainstop-adapt_stop],yr=[miny,maxy],yt='exp b/a',xt='Iteration',/nodata,charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,11,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor
-     
-     miny = min(Xveclistdim[*,12,0:chainstop-adapt_stop])-(0.01*min(Xveclistdim[*,12,0:chainstop-adapt_stop]))
-     maxy = max(Xveclistdim[*,12,0:chainstop-adapt_stop])+(0.01*max(Xveclistdim[*,12,0:chainstop-adapt_stop]))
-     cgplot, xx, Xveclistdim[0,12,0:chainstop-adapt_stop],yt='exp PA',xt='Iteration',/nodata,yr=[miny,maxy],charsize=charsize
-     for kk=0, nrep-1 do begin
-        cgplot, xx, Xveclistdim[kk,12,0:chainstop-adapt_stop],/overplot,color=color[kk]
-     endfor
-     
-  endelse
-  
-   
-  !p.multi=0
-
- 
-;Autocorrelation plots 
-;CALCULATE THE ACF and ESS
-
-  Ncol = FIX(ceil(nfpars/2D))
-  aa = 2D*Ncol
-  aa = aa - n_elements(plist)
-  PLOTSYM, 0 ,0.5, /FILL
-     
-     
-  if tot gt 1 then !P.MULTI = [0,2,Ncol]
-  lag = range(0,50,51)
-  
-  nlags = 50l
-  ACF = make_array(nrep,nfpars,nlags+1,/DOUBLE)
-  acfsig = make_array(nrep,nfpars,/DOUBLE)
-  ESS = make_array(nrep,nfpars,/DOUBLE)
-
-  items = make_array(nrep,/STRING)
-  for j=0,nrep-1 do items[j] = strcompress('Chain '+string(j+1))
-  
-  for jj=0, nfpars-1 do begin
-     
-     fakex = 1.
-     fakey = 1.
-     cgplot, fakex, fakey, yr = [-0.4,1], xr=[-0.5,50],/nodata,Title = pplist[jj],xt='Lag',yt='ACF'
-     if (jj eq 0) then Al_legend, items,psym=8,box=0,/bottom,/left,colors=color,charsize=0.5
-     
-     for kk=0, nrep-1 do begin
-        ACF[kk,jj,*] =  autocorr(Xveclistdim[kk,index[jj],discard :chainstop-adapt_stop],nlags=nlags)
-        acfsig[kk,jj] = 2D*sqrt((1D/(chainstop-adapt_stop+discard))*(1D + 2D*(TOTAL(ACF[kk,jj,*]^2D))))
-        essindex = where(ACF[kk,jj,*] ge (2D*acfsig[kk,jj]))
-        ESS[kk,jj] = DOUBLE(chainstop-adapt_stop+discard) / (1D + (2D * TOTAL((acf[kk,jj,*])[essindex])))
-        cgplot, lag, ACF[kk,jj,*],/overplot,psym=8,color=color[kk]
-     endfor
-  endfor
-  if aa eq 1 then cgplot,fakex,fakey,XSTYLE=4,YSTYLE=4,/nodata
-  
-
-  !P.multi=0
-  
-  
-END
 
 
 
