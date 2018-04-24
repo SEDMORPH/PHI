@@ -2325,7 +2325,7 @@ Pro bagal_priors,pars,varmat=varmat
 ;           SKIPLINE=skip,/SILENT,NUMLINE=1
 ;  print, format
 
-  strlist = ['NAME','seein','seein2','betaaa',$
+  strlist = ['seein','seein2','betaaa',$
              'serX0', 'serY0', 'Ie', 'Re', 'n', 'serE', 'serPA',$
              'expX0', 'expY0', 'I0', 'h', 'expE', 'expPA',$
              'ser2X0', 'ser2Y0', 'Ie2', 'Re2', 'n2', 'ser2E', 'ser2PA',$
@@ -4901,9 +4901,11 @@ PRO PHI
 
   bagal_setup
   
-  
-  readcol, './inputs/bagal_inputs.txt',NAME,seein,seein2,betaaa,$
-           FORMAT='A,F,F,F',$
+  readcol, './inputs/images.txt',NAME,$
+           FORMAT='A',$
+           SKIPLINE=1,/SILENT
+  readcol, './inputs/bagal_inputs.txt',seein,seein2,betaaa,$
+           FORMAT='F,F,F',$
            SKIPLINE=1,/SILENT
   readcol, './inputs/weights/weights.txt',whtnames,$
            FORMAT='A',/SILENT
