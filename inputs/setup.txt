@@ -92,17 +92,17 @@
 [12]	0-0-0			  |PA - Position angle (0:Fixed, 1:Free, 2:Initial)
 #	  
 #   Broken Exponential  
-(25)	1			  |0:Deactivate, 1:Activate
+(25)	0   			  |0:Deactivate, 1:Activate
 [02]	0-0-0			  |x0 - Central position in x dimension 
 [03]	0-0-0			  |y0 - Central position in y dimension
-[04]	1-0-1			  |i0 - Central intensity
-[05]	1-0-1			  |h1 - Inner scale length 
-[06]	1-0-1			  |h2 - Outer scale length 
-[07]	1-0-1			  |a - Brake sharpness   
-[08]	1-0-1			  |rb - Brake radius 
-[09]	1-0-2			  |q  - Axial ratio 
-[00]	1-0-3			  |pa - Position angle
-[11]	1-0-4			  |c0 - Ellipse shape parameter 
+[04]	0-0-0			  |i0 - Central intensity
+[05]	0-0-0			  |h1 - Inner scale length 
+[06]	0-0-0			  |h2 - Outer scale length 
+[07]	0-0-0			  |a - Brake sharpness   
+[08]	0-0-0			  |rb - Brake radius 
+[09]	0-0-0			  |q  - Axial ratio 
+[00]	0-0-0			  |pa - Position angle
+[11]	0-0-0			  |c0 - Ellipse shape parameter 
 #
 #   Ferrors (bar) 
 (26)	0			  |0:Deactivate, 1:Activate
