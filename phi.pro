@@ -2,19 +2,18 @@
 ;+
 ; NAME:
 ;   PHI
+;
 ; PURPOSE:
 ;   A Bayesian MCMC method for 2D photometric decompositions of
 ;   galaxies and other astronomical objects.    
-; 
-; INPUTS:
-;   
-; KEYWORDS:
 ;
 ;
-; OUTPUTS:
 ;
 ;
-
+;
+;
+;
+;-
 function psf_gaussian, parameters, NPIXEL=npixel, NDIMENSION=ndim, FWHM=fwhm,  $
                         DOUBLE = double, CENTROID=cntrd, ST_DEV=st_dev,  $
                         XY_CORREL=xy_corr, NORMALIZE=normalize
@@ -1943,18 +1942,19 @@ function bagal_flag, pars
      ;Scale height 2  
      h2 = (10D^(pars[beorder+4]))[0]
      if h2 lt 0.05D then beflag = 0
+     if h2 lt h1 then beflag = 0
      ;if h ge (2D*radi) then eflag = 0
      if (h2 ge nx-1) or (h2 ge ny-1) then beflag = 0
      
-     ;Broken Exponential shape  
+     ;Shapeness  
      bexpa = pars[beorder+5]   
      ;if bexpa lt 0.2D then beflag = 0
      ;if bexpa gt 1D then beflag = 0
 
-     ;brake radius 
+     ;Brake radius 
      rb = (10D^pars[beorder+6])[0]
-     if rb lt 0.05D then beflag = 0
-     
+     if rb lt h1 then beflag = 0
+     if rb gt h2 then beflag = 0
     
      ;Exponential b/a 
      bexpE = pars[beorder+7]   
@@ -1969,7 +1969,7 @@ function bagal_flag, pars
      
      ;if (eflag eq 0) then stop
   endif
-  
+ 
   if fernn gt 0 then begin
      fflag = 1
      ;Centre coordinates x0 and y0
@@ -2823,7 +2823,7 @@ Pro bagal_priors,pars,varmat=varmat
         if fh2 eq 1 then h2 = vprior(prih2,h2,a=1.)
      endif
      h2 = ALOG10(h2)
-
+     
      ;Brake sharpness 
      fbexpa = flist[0,beorder+5]
      pribexpa = flist[1,beorder+5]
@@ -2863,11 +2863,11 @@ Pro bagal_priors,pars,varmat=varmat
      abexp = [bexpx0/10.,bexpy0/10.,bI0/10.,h1/10.,h2/10.,bexpa/10, rb/10, bexpE/10.,bexpPA/10.]
      dbexp = [bexpx0/100.,bexpy0/100.,bI0/100.,h1/100.,h2/100.,bexpa/100,rb/100,bexpE/100.,bexpPA/100.]
      
-     parscale = [0.01D,0.01D, 0.01D,0.01D,0.01D, 0.01D, 0.01D, 0.01D, 5D]
+     parscale = [0.01D,0.01D, 0.01D,0.001D,0.001D, 0.001D, 0.0001D, 0.01D, 5D]
      varmat = [varmat,parscale]
      
   endif
-
+  
   ;FERRORS PROFILE
   ferx0_temp = !Values.F_NAN
   fery0_temp = !Values.F_NAN
@@ -3097,89 +3097,91 @@ Pro bagal_priors,pars,varmat=varmat
   pri_pars = pars
 
 
-  ;Check parameters 
-  flagcnt = 0D
-  REPEAT BEGIN
-     
-     if (sernn eq 1) then begin
-        if pri_pars[4] gt ALOG10(8D) then begin
-           pri_pars[4] = ALOG10(3D)
-        endif
-        if pri_pars[4] lt AlOG10(0.4) then begin
-           pri_pars[4] = ALOG10(3D)
-        endif
-        if pri_pars[3] lt -1D then begin
-           pri_pars[3] = 0D
-        endif
-        if pri_pars[0] gt (nx/2D)+20D or pri_pars[0] lt (nx/2D)-20D then begin
-           pri_pars[0] = nx/2D
-        endif
-        if pri_pars[1] gt (ny/2D)+20D or pri_pars[1] lt (ny/2D)-20D then begin
-           pri_pars[1] = ny/2D
-        endif
+                                ;Check parameters
+  if (sernn eq 1) or (expnn eq 1) then begin 
+     flagcnt = 0D
+     REPEAT BEGIN
         
-     endif
+        if (sernn eq 1) then begin
+           if pri_pars[4] gt ALOG10(8D) then begin
+              pri_pars[4] = ALOG10(3D)
+           endif
+           if pri_pars[4] lt AlOG10(0.4) then begin
+              pri_pars[4] = ALOG10(3D)
+           endif
+           if pri_pars[3] lt -1D then begin
+              pri_pars[3] = 0D
+           endif
+           if pri_pars[0] gt (nx/2D)+20D or pri_pars[0] lt (nx/2D)-20D then begin
+              pri_pars[0] = nx/2D
+           endif
+           if pri_pars[1] gt (ny/2D)+20D or pri_pars[1] lt (ny/2D)-20D then begin
+              pri_pars[1] = ny/2D
+           endif
            
-     if (expnn eq 1) then begin
+        endif
         
-        if pri_pars[7] gt (nx/2D)+20D or pri_pars[7] lt (nx/2D)-20D then begin
-           pri_pars[7] = nx/2D
-        endif
-        if pri_pars[8] gt (ny/2D)+20D or pri_pars[8] lt (ny/2D)-20D then begin
-           pri_pars[8] = ny/2D
-        endif
-     endif
-     
-     if (cennn eq 1) then begin
-        if (expnn eq 1) and (sernn eq 1) then begin
-           if pri_pars[13] gt (nx/2D)+20D or pri_pars[13] lt (nx/2D)-20D then begin
-              pri_pars[13] = nx/2D
-           endif
-           if pri_pars[14] gt (ny/2D)+20D or pri_pars[14] lt (ny/2D)-20D then begin
-              pri_pars[14] = ny/2D
-           endif
-        endif else begin
+        if (expnn eq 1) then begin
+           
            if pri_pars[7] gt (nx/2D)+20D or pri_pars[7] lt (nx/2D)-20D then begin
               pri_pars[7] = nx/2D
            endif
            if pri_pars[8] gt (ny/2D)+20D or pri_pars[8] lt (ny/2D)-20D then begin
               pri_pars[8] = ny/2D
            endif
-        endelse
+        endif
         
-     endif
-     
-     if (expnn eq 1) and (sernn eq 1) then begin
-        pflag = modify_initial(pri_pars)
+        if (cennn eq 1) then begin
+           if (expnn eq 1) and (sernn eq 1) then begin
+              if pri_pars[13] gt (nx/2D)+20D or pri_pars[13] lt (nx/2D)-20D then begin
+                 pri_pars[13] = nx/2D
+              endif
+              if pri_pars[14] gt (ny/2D)+20D or pri_pars[14] lt (ny/2D)-20D then begin
+              pri_pars[14] = ny/2D
+           endif
+           endif else begin
+              if pri_pars[7] gt (nx/2D)+20D or pri_pars[7] lt (nx/2D)-20D then begin
+                 pri_pars[7] = nx/2D
+              endif
+              if pri_pars[8] gt (ny/2D)+20D or pri_pars[8] lt (ny/2D)-20D then begin
+                 pri_pars[8] = ny/2D
+              endif
+           endelse
+           
+        endif
         
-        if pflag[0] eq 0 then begin
+        if (expnn eq 1) and (sernn eq 1) then begin
+           pflag = modify_initial(pri_pars)
+           
+           if pflag[0] eq 0 then begin
                                 ;Bulge-to-disc ratio < Re
-           pri_pars[2] = pri_pars[2] + 0.05
-        endif
-        if pflag[1] eq 0 then begin
+              pri_pars[2] = pri_pars[2] + 0.05
+           endif
+           if pflag[1] eq 0 then begin
                                 ;Double crossing points
-           pri_pars[4] = pri_pars[4] - 0.5
-           pri_pars[10] = ALOG10((10D^(pri_pars[10])) + 0.5)
-        endif
-        if pflag[2] eq 0 and pflag[0] eq 1 then begin
+              pri_pars[4] = pri_pars[4] - 0.5
+              pri_pars[10] = ALOG10((10D^(pri_pars[10])) + 0.5)
+           endif
+           if pflag[2] eq 0 and pflag[0] eq 1 then begin
                                 ;Zero crossing point
-           
-           if pflag[4] eq 1 then pri_pars[9] = pri_pars[9] + 0.05 else pri_pars[2] = pri_pars[2] + 0.05
-           
-        endif
+              
+              if pflag[4] eq 1 then pri_pars[9] = pri_pars[9] + 0.05 else pri_pars[2] = pri_pars[2] + 0.05
+              
+           endif
                                 ;Re/h > 1
-        if pflag[3] eq 0 then begin
-           pri_pars[3] = ALOG10((10D^(pri_pars[3])) - 0.5)
+           if pflag[3] eq 0 then begin
+              pri_pars[3] = ALOG10((10D^(pri_pars[3])) - 0.5)
+           endif
+           
         endif
         
-     endif
-           
         
-     
+        
 
-     if (expnn eq 0) and (sernn eq 1) then pflag=[1,1,1,1,1]
-  ENDREP UNTIL (pflag[0] eq 1) and (pflag[1] eq 1) and (pflag[2] eq 1) and (pflag[3] eq 1) 
- 
+        if (expnn eq 0) and (sernn eq 1) then pflag=[1,1,1,1,1]
+     ENDREP UNTIL (pflag[0] eq 1) and (pflag[1] eq 1) and (pflag[2] eq 1) and (pflag[3] eq 1) 
+  endif
+  
   pars = pri_pars
 
 
@@ -3434,10 +3436,10 @@ PRO bagal_setup
   
 ;The model routine 
   mlist = MAKE_ARRAY(1,/STRING)
-  if fsersic eq 1 then mlist = [mlist, 'sersic(spars)']
-  if fexp eq 1 then mlist = [mlist, 'expon(epars)']
-  REMOVE, 0 , mlist
-  mlist = strjoin(mlist,'+')
+  ;if fsersic eq 1 then mlist = [mlist, 'sersic(spars)']
+  ;if fexp eq 1 then mlist = [mlist, 'expon(epars)']
+  ;REMOVE, 0 , mlist
+  ;mlist = strjoin(mlist,'+')
  
 
 ;Noise 
@@ -3724,6 +3726,7 @@ FUNCTION bagal_model,pars
   skyorder = where(nlist eq 'sky', skynn)
   
   excstr = make_array(1,/STRING)
+  xc=[] & yc=[]
   
   ;T = SYSTIME(1)
   if sernn gt 0 then begin
@@ -3740,6 +3743,7 @@ FUNCTION bagal_model,pars
         serxc = (pars[sorder])
         seryc = (pars[sorder+1])
      endelse
+     xc = [xc,serxc] & yc = [yc, seryc]
      
      Ie = 10D^(pars[sorder+2])
      ;Ie = 10D^(-0.4 * (mue - zcalib - 2.5*alog10((scale^2D))))
@@ -3775,6 +3779,7 @@ FUNCTION bagal_model,pars
         ser2xc = (pars[sorder2])
         ser2yc = (pars[sorder2+1])
      endelse
+     xc = [xc,ser2xc] & yc = [yc, ser2yc]
      
      Ie2 = 10D^(pars[sorder2+2])
      ;Ie = 10D^(-0.4 * (mue - zcalib - 2.5*alog10((scale^2D))))
@@ -3809,6 +3814,7 @@ FUNCTION bagal_model,pars
         ser3xc = (pars[sorder3])
         ser3yc = (pars[sorder3+1])
      endelse
+     xc = [xc,ser3xc] & yc = [yc, ser3yc]
      
      Ie3 = 10D^(pars[sorder3+2])
      ;Ie = 10D^(-0.4 * (mue - zcalib - 2.5*alog10((scale^2D))))
@@ -3843,6 +3849,7 @@ FUNCTION bagal_model,pars
         ser4xc = (pars[sorder4])
         ser4yc = (pars[sorder4+1])
      endelse
+     xc = [xc,ser4xc] & yc = [yc, ser4yc]
      
      Ie4 = 10D^(pars[sorder4+2])
      ;Ie = 10D^(-0.4 * (mue - zcalib - 2.5*alog10((scale^2D))))
@@ -3874,7 +3881,8 @@ FUNCTION bagal_model,pars
         expxc = (pars[eorder])
         expyc = (pars[eorder+1])
      endelse
-
+     xc = [xc,expxc] & yc = [yc, expyc]
+     
      I0 = 10D^(pars[eorder+2])
      h = 10D^(pars[eorder+3])
      expell = pars[eorder+4]
@@ -3900,7 +3908,8 @@ FUNCTION bagal_model,pars
         bexpxc = (pars[beorder])
         bexpyc = (pars[beorder+1])
      endelse
-
+     xc = [xc,bexpxc] & yc = [yc, bexpyc]
+     
      bI0 = 10D^(pars[beorder+2])
      h1 = 10D^(pars[beorder+3])
      h2 = 10D^(pars[beorder+4])
@@ -3939,6 +3948,7 @@ FUNCTION bagal_model,pars
         ferxc = (pars[forder])
         feryc = (pars[forder+1])
      endelse
+     xc = [xc,ferxc] & yc = [yc, feryc]
      
      ferI0 = 10D^(pars[forder+2])
      l = 10D^(pars[forder+3])
@@ -3972,6 +3982,7 @@ FUNCTION bagal_model,pars
         fer2xc = (pars[forder2])
         fer2yc = (pars[forder2+1])
      endelse
+     xc = [xc,fer2xc] & yc = [yc, fer2yc]
      
      fer2I0 = 10D^(pars[forder2+2])
      l2 = 10D^(pars[forder2+3])
@@ -4013,8 +4024,8 @@ FUNCTION bagal_model,pars
   gradindex = where_xyz(grad_shot ge gradthres, Xind=xind, Yind=yind)
   
   ;stop
-  xc = serxc
-  yc = seryc
+  xc = median(xc)
+  yc = median(yc)
   gradradi = 2D
   circ = cir_mask(grad_shot, xc, yc, radi)
   
