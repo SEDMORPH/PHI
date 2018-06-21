@@ -6,33 +6,36 @@
 # GENERAL MCMC INPUTS
 #===============================================================================================
 #
-(1)	3	 		  |Maximum number of Markovian chains 
-(2)	30000	 		  |Maximum number of iterations 
-(3)	0	 		  |Perform 1D fit for initial guesses? 0:No 1:Yes
+(0)	2	 		  |The algorithm to use; 0:Metropolis-hastings, 1:RAM, 2:SAMI
+(1)	0.234			  |Acceptance ratio  
+(2)	1			  |Likelihood function; 0:Chisq 1:Bayesian 2:Poisson 3:Gaussian 4:Scaled	 
+(3)	3	 		  |Maximum number of Markovian chains 
+(4)	30000	 		  |Maximum number of iterations 
+(5)	0	 		  |Perform 1D fit for initial guesses? 0:No 1:Yes
 #
 #===============================================================================================
 # IMAGE/INSTRUMENT INFORMATION
 #===============================================================================================
 #
-(4)	0.06			  |Telescope Scale (“/Pixel)
-(5)	-23.669			  |Zero point with exposure time (J:26.2303 H:25.9463 SDSS: g:29.439, r:29.13, i 28.69)
-(6)	3	 		  |PSF; 0:Gaussian, 1:Moffat, 2:Double Gaussian, 3:Input image
+(6)	0.06			  |Telescope Scale (“/Pixel)
+(7)	-23.669			  |Zero point with exposure time (J:26.2303 H:25.9463 SDSS: g:29.439, r:29.13, i:28.69)
+(8)	3	 		  |PSF; 0:Gaussian, 1:Moffat, 2:Double Gaussian, 3:Input image
 [0]     rpsf_normal		  |PSF image name
-(7)	0			  |Beta parameter for Moffat PSF
-(8)	0			  |Convolution method; 0:FFT, 1:Integrals 
-(9)	3.			  |Seeing FWHM (in pixel)
-(10)	0.			  |Seeing FWHM (for second gaussian, for double gaussian only)
-(11)	1241.0700		  |Sky values 
-(12)	0			  |Include Poisson Noise in models; 0:No 1:yes
-(13)	6.5650001		  |Gain(e-/ADU)
-(14)	15.756000  		  |Readout noise
-(15)	0			  |Include exposure time (seconds); 0:No 1:Exposure-value 2:Exposure-map
-(16)	1900			  |Exposure time (seconds)
+(9)	0			  |Beta parameter for Moffat PSF
+(10)	0			  |Convolution method; 0:FFT, 1:Integrals 
+(11)	3.			  |Seeing FWHM (in pixel)
+(12)	0.			  |Seeing FWHM (for second gaussian, for double gaussian only)
+(13)	1241.0700		  |Sky values 
+(14)	0			  |Include Poisson Noise in models; 0:No 1:yes
+(15)	6.5650001		  |Gain(e-/ADU)
+(16)	15.756000  		  |Readout noise
+(17)	0			  |Include exposure time (seconds); 0:No 1:Exposure-value 2:Exposure-map
+(18)	1900			  |Exposure time (seconds)
 [1] 	file			  |Exposure map name (or write file, to read from file)
-(17)	0			  |Include Background noise in models; 0:No 1:Sigma-value 2:Sigma-map
-(18)	4.765			  |Sky sigma value for each pixel
+(19)	0			  |Include Background noise in models; 0:No 1:Sigma-value 2:Sigma-map
+(20)	4.765			  |Sky sigma value for each pixel
 [2]	None			  |Weight map file name (.fits)
-(19)	0			  |Work with the logarithm of the image
+(21)	0			  |Work with the logarithm of the image
 #
 #===============================================================================================
 # COMPONENTS TO FIT		   
@@ -43,7 +46,7 @@
 [5]	0-0-0			  |Sky background 
 #
 #   Serśic profile / Bulge  		  
-(20)	1			  |0:Deactivate, 1:Activate
+(22)	1			  |0:Deactivate, 1:Activate
 [6]	0-0-0			  |X0 - Central position in x dimension 
 [7]	0-0-0			  |Y0 - Central position in y dimension (0:Fixed, 1:Free, 2:Initial)
 [8]	1-0-1			  |ie - Effective Surface Intensity (0:Fixed, 1:Free, 2:Initial)
@@ -53,7 +56,7 @@
 [12]	1-0-3			  |PA - Position angle (0:Fixed, 1:Free, 2:Initial)
 #	  
 #   Exponential profile / Disc 
-(21)	0			  |0:Deactivate, 1:Activate
+(23)	0			  |0:Deactivate, 1:Activate
 [13]	0-0-0			  |X0 - Central position in x dimension (0:Fixed, 1:Free, 2:Initial)
 [14]	0-0-0			  |Y0 - Central position in y dimension (0:Fixed, 1:Free, 2:Initial)
 [15]	0-0-0			  |I0 - Central intensity (0:Fixed, 1:Free, 2:Initial)
@@ -61,79 +64,37 @@
 [17]	0-0-0			  |e  - Ellipticity (0:Fixed, 1:Free, 2:Initial)
 [18]	0-0-0			  |PA - Position angle (0:Fixed, 1:Free, 2:Initial)
 #
-#   Serśic profile 2nd  		  
-(22)	0			  |0:Deactivate, 1:Activate
-[6]	0-0-0			  |X0 - Central position in x dimension 
-[7]	0-0-0			  |Y0 - Central position in y dimension (0:Fixed, 1:Free, 2:Initial)
-[8]	1-0-1			  |ie - Effective Surface Intensity (0:Fixed, 1:Free, 2:Initial)
-[9]	1-0-1			  |Re - Effective Radius (0:Fixed, 1:Free, 2:Initial)
-[10]	1-0-1			  |n  - Serśic index (0:Fixed, 1:Free, 2:Initial)
-[11]	1-0-2			  |e  - Ellipticity (0:Fixed, 1:Free, 2:Initial)
-[12]	1-0-3			  |PA - Position angle (0:Fixed, 1:Free, 2:Initial)
-#	  
-#   Serśic profile 3rd  		  
-(23)	0			  |0:Deactivate, 1:Activate
-[6]	0-0-0			  |X0 - Central position in x dimension 
-[7]	0-0-0			  |Y0 - Central position in y dimension (0:Fixed, 1:Free, 2:Initial)
-[8]	0-0-0			  |ie - Effective Surface Intensity (0:Fixed, 1:Free, 2:Initial)
-[9]	0-0-0			  |Re - Effective Radius (0:Fixed, 1:Free, 2:Initial)
-[10]	0-0-0			  |n  - Serśic index (0:Fixed, 1:Free, 2:Initial)
-[11]	0-0-0			  |e  - Ellipticity (0:Fixed, 1:Free, 2:Initial)
-[12]	0-0-0			  |PA - Position angle (0:Fixed, 1:Free, 2:Initial)
-#	  
-#   Serśic profile 4th 		  
+#   Broken Exponential / Outer disc 
 (24)	0			  |0:Deactivate, 1:Activate
-[6]	0-0-0			  |X0 - Central position in x dimension 
-[7]	0-0-0			  |Y0 - Central position in y dimension (0:Fixed, 1:Free, 2:Initial)
-[8]	0-0-0			  |ie - Effective Surface Intensity (0:Fixed, 1:Free, 2:Initial)
-[9]	0-0-0			  |Re - Effective Radius (0:Fixed, 1:Free, 2:Initial)
-[10]	0-0-0			  |n  - Serśic index (0:Fixed, 1:Free, 2:Initial)
-[11]	0-0-0			  |e  - Ellipticity (0:Fixed, 1:Free, 2:Initial)
-[12]	0-0-0			  |PA - Position angle (0:Fixed, 1:Free, 2:Initial)
-#	  
-#   Broken Exponential  
-(25)	0   			  |0:Deactivate, 1:Activate
-[02]	0-0-0			  |x0 - Central position in x dimension 
-[03]	0-0-0			  |y0 - Central position in y dimension
-[04]	0-0-0			  |i0 - Central intensity
-[05]	0-0-0			  |h1 - Inner scale length 
-[06]	0-0-0			  |h2 - Outer scale length 
-[07]	0-0-0			  |a - Brake sharpness   
-[08]	0-0-0			  |rb - Brake radius 
-[09]	0-0-0			  |q  - Axial ratio 
-[00]	0-0-0			  |pa - Position angle
-[11]	0-0-0			  |c0 - Ellipse shape parameter 
 #
-#   Ferrors (bar) 
+#   Ferrors profile / Main Bar
+(25)	0			  |0:Deactivate, 1:Activate
+#
+#   Ferrors profile / Secondary Bar
 (26)	0			  |0:Deactivate, 1:Activate
-[02]	0-0-0			  |x0 - Central position in x dimension 
-[03]	0-0-0			  |y0 - Central position in y dimension
-[04]	0-0-0			  |i0 - Central intensity
-[05]	0-0-0			  |l - Length  
-[06]	0-0-0			  |n - Shape parameter
-[07]	0-0-0			  |q  - Axial ratio 
-[08]	0-0-0			  |pa - Position angle 
-[09]	0-0-0			  |c0 - Ellipse shape parameter  
 #
-#   Second Ferrors (bar) 
+#   King Profile 
 (27)	0			  |0:Deactivate, 1:Activate
-[02]	0-0-0			  |x0 - Central position in x dimension 
-[03]	0-0-0			  |y0 - Central position in y dimension
-[04]	0-0-0			  |i0 - Central intensity
-[05]	0-0-0			  |l - Bar length  
-[06]	0-0-0			  |n - Bar shape parameter
-[07]	0-0-0			  |q  - Axial ratio 
-[08]	0-0-0			  |pa - Position angle 
-[09]	0-0-0			  |c0 - Ellipse shape parameter   
+#
+#   Nuclear Source 
+(28)	0			  |0:Deactivate, 1:Activate
+#   
+#   Gaussian Profile 		  
+(29)	0			  |0:Deactivate, 1:Activate
+#   
+#   Moffat Profile
+(30)	0			  |0:Deactivate, 1:Activate
+#
 #===============================================================================================
 # SPECIFICATIONS 		   
 #===============================================================================================
 #
-(28)	5.			  |Minimum object radius in pixels
-(29)	70.			  |Maximum Fitting radius
-(30)	1.			  |Number of sigmas over the sky RMS for the automatic radius
-(31)	1			  |Mask image; 0:Non, 1:Activate
-(32)	0			  |Use pixels in mask only 
+(31)	5.			  |Minimum object radius in pixels
+(32)	70.			  |Maximum Fitting radius
+(33)	1.			  |Number of sigmas over the sky RMS for the automatic radius
+(34)	1			  |Mask image; 0:Non, 1:Activate
+(35)	0			  |Use pixels in mask only 
+(36)	0			  |Scale error bars; 0:Off, 1:On	 
 #
 #
 # PARAMETER TYPE FLAG AND PRIOR FLAGS
